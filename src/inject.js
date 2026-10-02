@@ -157,7 +157,8 @@
     'trialhd.com', 'sadbaguette.com', 'chilihandshakewing.com',
     'poweredby.jads.co', 'janitorprecisiontrio.com', 'frozenpayerpregnant.com',
     'clammyendearedkeg.com', 'guidepaparazzisurface.com', 'acquiredeceasedundress.com',
-    'darnobedienceupscale.com'
+    'darnobedienceupscale.com', '/api/_/popunder', 'tsyndicate.com',
+    'ero-advertising.com', 'theporndude.com'
   ];
 
   const origFetch = window.fetch;

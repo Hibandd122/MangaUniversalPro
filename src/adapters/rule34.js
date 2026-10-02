@@ -59,7 +59,7 @@ window.MangaAdapters['rule34'] = {
     
     // Popunder / floating overlays
     'div[style*="z-index: 2147483647"]',
-    'div[style*="z-index: 999999"]:not(#md-turbo-widget)'
+    'div[style*="z-index: 999999"]:not(#md-autonext-widget)'
   ],
 
   nextChapterSelectors: [
@@ -69,31 +69,6 @@ window.MangaAdapters['rule34'] = {
     'a[alt="next"]',
     'a[title="Next Post"]'
   ],
-
-  getTitle: function () {
-    const host = window.location.hostname.toLowerCase();
-    if (host.includes('rule34video.com')) {
-      const h1 = document.querySelector('h1');
-      if (h1 && h1.textContent.trim()) {
-        return h1.textContent.trim();
-      }
-      return document.title.replace(/- Rule34Video.*$/i, '').trim();
-    } else {
-      // rule34.xxx
-      return document.title.replace(/\|.*Rule 34.*$/i, '').trim() || 'Rule34 Post';
-    }
-  },
-
-  getChapter: function () {
-    const host = window.location.hostname.toLowerCase();
-    if (host.includes('rule34video.com')) {
-      return 'Video HD';
-    } else {
-      const sp = new URLSearchParams(window.location.search);
-      const id = sp.get('id');
-      return id ? `Post #${id}` : 'Hình Ảnh';
-    }
-  },
 
   // Thanh trừng toàn bộ quảng cáo nhưng BẢO VỆ TUYỆT ĐỐI khung phát video (#kt_player) và ảnh chính (#image)
   purgeAds: function () {
@@ -129,3 +104,4 @@ window.MangaAdapters['rule34'] = {
     }
   }
 };
+

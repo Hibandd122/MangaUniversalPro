@@ -1,5 +1,5 @@
-// Adapter: nhentai (nhentai.net, nhentai.xxx, nhentai.to)
-// Deep integration: Ad neutralization, Next-page 0s Preload, Broken image CDN recovery, Hotkeys
+// Adapter: nHentai (nhentai.net, nhentai.xxx, nhentai.to)
+// Deep integration: Ad neutralization, Popunder trap defang, Clean navigation
 
 window.MangaAdapters = window.MangaAdapters || {};
 
@@ -7,7 +7,7 @@ window.MangaAdapters['nhentai.net'] = {
   name: 'nHentai',
 
   match: function () {
-    const host = window.location.hostname;
+    const host = window.location.hostname.toLowerCase();
     return host.includes('nhentai.net') || host.includes('nhentai.xxx') || host.includes('nhentai.to');
   },
 
@@ -17,19 +17,34 @@ window.MangaAdapters['nhentai.net'] = {
   },
 
   adSelectors: [
+    // 1. Mạng quảng cáo người lớn phổ biến trên nHentai
     'iframe[src*="exoclick"]',
     'iframe[src*="juicyads"]',
     'iframe[src*="ero-advertising"]',
     'iframe[src*="trafficjunky"]',
     'iframe[src*="tsyndicate"]',
     'iframe[src*="chaturbate"]',
+    
+    // 2. Banner & Popunder container
     '#ad-banner',
     '.ad-banner',
     '.advertisement',
     '#chaturbate-ad',
     '.banner-holder',
+    '.script_manager_video_master',
     'div[id*="ad_"]',
-    'div[class*="ad-"]'
+    'div[class*="ad-"]',
+    'div[data-jads-slot]',
+    
+    // 3. Link quảng cáo ngoài & Bẫy click chuyển hướng
+    'a[href*="/api/_/popunder"]',
+    'a[href*="chaturbate.com"]',
+    'a[href*="exoclick.com"]',
+    'a[href*="theporndude.com"]',
+    'a[href*="daftsex.eu"]',
+    'a[href*="animemafia.to"]',
+    'a[href*="juicyads.com"]',
+    'a[href*="ero-advertising.com"]'
   ],
 
   nextChapterSelectors: [
@@ -39,51 +54,24 @@ window.MangaAdapters['nhentai.net'] = {
     '.pagination a.next'
   ],
 
-  // Thông tin truyện để lưu lịch sử
-  getTitle: function () {
-    const titleEl = document.querySelector('#info h1.title, #info h2.title, h1.title');
-    if (titleEl) {
-      return titleEl.textContent.trim();
-    }
-    // Lấy từ document.title
-    return document.title.replace(/»\s*nhentai.*$/i, '').trim();
-  },
-
-  getChapter: function () {
-    const match = window.location.pathname.match(/\/g\/(\d+)\/(\d+)\/?/);
-    if (match) {
-      const page = match[2];
-      const totalPagesEl = document.querySelector('.num-pages, span.num-pages');
-      const total = totalPagesEl ? totalPagesEl.textContent.trim() : '';
-      return total ? `Trang ${page} / ${total}` : `Trang ${page}`;
-    }
-    return 'Chi tiết';
-  },
-
-  // Dọn sạch quảng cáo & khung thừa
+  // Thanh trừng quảng cáo & Hóa giải bẫy click chuột
   purgeAds: function () {
+    // 1. Xóa các container quảng cáo
     for (const sel of this.adSelectors) {
-      const items = document.querySelectorAll(sel);
-      for (const el of items) {
-        el.remove();
-      }
+      try {
+        document.querySelectorAll(sel).forEach(el => el.remove());
+      } catch (e) {}
     }
-  },
 
-  // Khôi phục ảnh lỗi bằng CDN dự phòng
-  recoverBrokenImage: function (img) {
-    if (!img || !img.src) return;
-    const url = new URL(img.src);
-    // Danh sách CDN thay thế của nhentai: i.nhentai.net, i2.nhentai.net, i3.nhentai.net, i5.nhentai.net, i7.nhentai.net
-    const cdns = ['i.nhentai.net', 'i3.nhentai.net', 'i5.nhentai.net', 'i7.nhentai.net'];
-    const currentHost = url.hostname;
-    const availableCdns = cdns.filter(c => c !== currentHost);
-    
-    if (availableCdns.length > 0) {
-      const nextCdn = availableCdns[Math.floor(Math.random() * availableCdns.length)];
-      url.hostname = nextCdn;
-      url.searchParams.set('_retry', Date.now());
-      img.src = url.toString();
+    // 2. Hóa giải bẫy popunder gài trên ảnh đọc truyện (#image-container)
+    const imgLink = document.querySelector('#image-container a');
+    if (imgLink && !imgLink.dataset.defanged) {
+      imgLink.dataset.defanged = 'true';
+      // Ngăn chặn các script bên ngoài gài popup khi bấm vào ảnh
+      imgLink.addEventListener('click', function (e) {
+        e.stopPropagation();
+      }, true);
     }
   }
 };
+

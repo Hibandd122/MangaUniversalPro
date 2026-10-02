@@ -11,19 +11,29 @@ USER_SCRIPT = os.path.join(BASE_DIR, 'MangaUniversalPro.user.js')
 BUNDLE_SCRIPT = os.path.join(BASE_DIR, 'MangaUniversalPro.bundle.user.js')
 G_DRIVE_DIR = r"G:\My Drive\Manga Universal Pro"
 
-def set_github_repo(username, repo='MangaUniversalPro', branch='main'):
+def bump_version():
+    """Tự động tăng số version patch (vd: 3.0.1 -> 3.0.2) để Tampermonkey nhận diện cập nhật ngay"""
+    import re
+    for path in [USER_SCRIPT, BUNDLE_SCRIPT]:
+        if os.path.exists(path):
+            with open(path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            match = re.search(r'// @version\s+(\d+\.\d+\.)(\d+)', content)
+            if match:
+                new_ver = f"{match.group(1)}{int(match.group(2)) + 1}"
+                content = re.sub(r'// @version\s+\S+', f'// @version      {new_ver}', content)
+                with open(path, 'w', encoding='utf-8') as f:
+                    f.write(content)
+                print(f"[OK] Đã tăng version {os.path.basename(path)} -> {new_ver}")
+
+def set_github_repo(username='Hibandd122', repo='MangaUniversalPro', branch='main'):
     """Cập nhật đường dẫn GitHub trong MangaUniversalPro.user.js"""
     with open(USER_SCRIPT, 'r', encoding='utf-8') as f:
         content = f.read()
 
-    # Replace namespace and require links
     import re
     content = re.sub(r'https://github.com/[^/]+/[^/\n]+', f'https://github.com/{username}/{repo}', content)
-    content = re.sub(
-        r'https://cdn.jsdelivr.net/gh/[^/]+/[^/@]+@[^/]+/',
-        f'https://cdn.jsdelivr.net/gh/{username}/{repo}@{branch}/',
-        content
-    )
+    content = re.sub(r'https://raw.githubusercontent.com/[^/]+/[^/]+/[^/]+/', f'https://raw.githubusercontent.com/{username}/{repo}/{branch}/', content)
     with open(USER_SCRIPT, 'w', encoding='utf-8') as f:
         f.write(content)
     print(f"[OK] Đã cập nhật GitHub Repo: {username}/{repo} ({branch})")
@@ -104,10 +114,12 @@ def sync_to_gdrive():
         print(f"[OK] Đã đồng bộ sang Google Drive: {G_DRIVE_DIR}")
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        # e.g.: python build.py myusername myrepo
+    if '--bump' in sys.argv:
+        bump_version()
+    elif len(sys.argv) > 1 and not sys.argv[1].startswith('-'):
         user = sys.argv[1]
         repo = sys.argv[2] if len(sys.argv) > 2 else 'MangaUniversalPro'
         set_github_repo(user, repo)
     build_bundle()
     sync_to_gdrive()
+
